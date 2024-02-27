@@ -1,4 +1,4 @@
-# entraspray
+# Entraspray
 
 Entraspray is a rewrite of [MSOLSpray](https://github.com/dafthack/MSOLSpray) in python. The main purpose of this tool remains the same: to perform password spraying against Microsoft Azure accounts while also providing detailed information about account status and errors; such as if MFA is enabled, if a tenant or user doesn't exist, if the account is locked or disabled and more.
 
