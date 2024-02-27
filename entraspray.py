@@ -105,7 +105,7 @@ def parse_arguments():
 
 
 def entra_spray(
-    url, user_list_file, password, delay, user_agents_file, force, verbose, proxy, debug
+    url, user_list_file, password, delay, user_agents_file, force, verbose, debug, proxy
 ):
     usernames = [line.strip() for line in open(user_list_file)]
     user_agents = [line.strip() for line in open(user_agents_file)]
@@ -173,12 +173,14 @@ def entra_spray(
                 log_message(f"[*] Headers: {post_headers}", full_log)
                 log_message(f"[*] Data: {body_params}", full_log)
 
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
             if proxy:
-                urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
                 proxies = {
                     'http': proxy,
                     'https': proxy,
                 }
+            if not proxy:
+                proxies = None
 
             # Add "X-My-X-Forwarded-For" header for Firprox (if "microsoft" is not in the url value)
             r = requests.post(
@@ -369,8 +371,8 @@ def main():
         user_agents_file,
         args.force,
         args.verbose,
-        args.proxy,
         args.debug,
+        args.proxy,
     )
 
 
