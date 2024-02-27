@@ -1,13 +1,12 @@
 # entraspray
 
-Entraspray is a rewrite of [MSOLSpray](https://github.com/dafthack/MSOLSpray) in python. The main purpose of this tool remains the same: to identify valid passwords for Microsoft Azure accounts while also providing detailed information about account status and errors; such as if MFA is enabled, if a tenant or user doesn't exist, if the account is locked or disabled and more.
+Entraspray is a rewrite of [MSOLSpray](https://github.com/dafthack/MSOLSpray) in python. The main purpose of this tool remains the same: to perform password spraying against Microsoft Azure accounts while also providing detailed information about account status and errors; such as if MFA is enabled, if a tenant or user doesn't exist, if the account is locked or disabled and more.
 
-### Enhancement:
+### Enhancements:
 
 - The script will remove "compromised" users from the input list. This feature prevents password spraying against accounts where the correct password has already been identified in previous execution of the script. A backup of the original user input list is created in the output directory. While seemingly minor, this change can reduce repeated password spraying and account lockouts, a feature I have not seen in most of the other password spraying tools. The operator can safely keep using the same user input list without risking unnecessary account lockout and alerting. 
-- Random selection of user-agents supplied 
-Additionally
-Some additional error codes have also been added based on conditional access policy.
+- Random selection of user-agent for each request.
+- Some additional error codes have also been added based on conditional access policy.
 
 The tool supports using FireProx to rotate source IP addresses on authentication requests, avoiding being blocked by Microsoft Entra Smart Lockout.
 
